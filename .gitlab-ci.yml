@@ -22,7 +22,7 @@ build:
     - npm install
     - npm run build
   artifacts:
-    path:
+    paths:
       - build/
 
 deploy:
@@ -34,4 +34,8 @@ deploy:
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - scp ./build/* deploy@172.104.151.230:~/realworld
+    - rsync -a --progress --human-readable --delete
+      --exclude-from '.gitignore'
+      --exclude .gitignore
+      --exclude .git
+      ./build/* deploy@172.104.151.230:~/realworld/
