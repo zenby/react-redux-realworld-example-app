@@ -17,10 +17,31 @@ eslint:
     # установка NVM
     - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
     # активируем NVM
-    - export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use
+    - export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use $NODE_VERSION
     # установка Node.js
-    - nvm install $NODE_VERSION
+    - nvm install
     # установка зависимостей
     - npm install
     # запуск ESLint
     - npm run lint
+
+# создадим job с именем prettier
+prettier:
+  # добавим ее в стадию test
+  stage: test
+  # укажем переменные окружения. В отличие от GitHub, в GitLab
+  # переменные окружения являются постоянными для всей job.
+  variables:
+    NODE_VERSION: 14.17.0
+  # секция script описывает шаги
+  script:
+    # установка NVM
+    - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+    # активируем NVM
+    - export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use $NODE_VERSION
+    # установка Node.js
+    - nvm install
+    # установка зависимостей
+    - npm install
+    # запуск Prettier
+    - npm run check:format
