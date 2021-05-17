@@ -1,42 +1,26 @@
+# стадии нашего pipeline. Для группировки jobs.
+# Нужно помнить, что stages выполняются последовательно, а job параллельно.
 stages:
-  - build
-  - deploy
+  # укажем одну стадию с именем test
+  - test
 
-cache:
-  key:
-    files:
-      - package-lock.json
-  paths:
-    - .npm/
-
-.default-cache: &default-cache
-  before_script:
-    - npm ci --cache .npm --prefer-offline
-
-build:
-  extends:
-    - .default-cache
-  image: node:14.17.0-alpine
-  stage: build
+# создадим job с именем eslint
+eslint:
+  # добавим ее в стадию test
+  stage: test
+  # укажем переменные окружения. В отличие от GitHub, в GitLab
+  # переменные окружения являются постоянными для всей job.
+  variables:
+    NODE_VERSION: 14.17.0
+  # секция script описывает шаги
   script:
+    # установка NVM
+    - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+    # активируем NVM
+    - export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" --no-use
+    # установка Node.js
+    - nvm install $NODE_VERSION
+    # установка зависимостей
     - npm install
-    - npm run build
-  artifacts:
-    paths:
-      - build/
-
-deploy:
-  image: ubuntu:latest
-  stage: deploy
-  script:
-    - apt -qq update && apt upgrade -qqy openssh-client rsync
-    - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-    - mkdir -p ~/.ssh
-    - chmod 700 ~/.ssh
-    - echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-    - rsync -a --progress --human-readable --delete
-      --exclude-from '.gitignore'
-      --exclude .gitignore
-      --exclude .git
-      ./build/* deploy@172.104.151.230:~/realworld/public/
+    # запуск ESLint
+    - npm run lint
