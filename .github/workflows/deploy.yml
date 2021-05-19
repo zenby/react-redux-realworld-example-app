@@ -1,9 +1,9 @@
+---
 name: Build and Deploy
 
 on:
   push:
     branches: [main]
-
   # специальное событие, которое происходит при ручном вызове workflow
   workflow_dispatch:
 
@@ -34,20 +34,19 @@ jobs:
         env:
           REACT_APP_BACKEND_URL: ${{ secrets.API_URL }}
       # Дальше по аналогии с backend, просто загружаем на сервер
-      - name: Setup SSH
+      - name: Deploy
         run: |
           # создаем директорию для ключа
-          mkdir -p ~/.ssh
+          mkdir -p ~/.ssh/
           # выводим содержимое нашей переменной окружения в файл
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-          chmod 700 ~/.ssh
           chmod 600 ~/.ssh/id_rsa
-          echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
-      - name: Copy files to the server
-        run: |
+          # Добавляем отпечаток сервера
+          ssh-keyscan -H $SSH_HOST > ~/.ssh/known_hosts
           # воспользуемся SCP здесь, т.к. нам просто нужно загрузить из
           # одной директории
-          scp -r build/* deploy@172.104.151.230:~/realworld/public
+          scp -r build/* $SSH_USER@$SSH_HOST:~/realworld/public
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
